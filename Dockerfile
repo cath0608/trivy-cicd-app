@@ -1,18 +1,24 @@
-# Stage 1 - build dependencies
-FROM python:3.11-slim AS builder
-WORKDIR /app
-COPY requirements.txt .
-RUN pip install --upgrade pip && \
-    pip install --no-cache-dir --target=/app/deps -r requirements.txt
+# First stage: build with dependencies
+FROM python:3.11-alpine AS builder
 
+WORKDIR /app
+
+# Install build tools
+RUN apk add --no-cache gcc musl-dev libffi-dev
+
+# Install Python dependencies
+COPY requirements.txt .
+RUN pip install --no-cache-dir -r requirements.txt -t /app
+
+# Copy application code
 COPY app.py .
 
-# Stage 2 - production image (distroless)
-FROM gcr.io/distroless/python3
+# Final stage: runtime image
+FROM python:3.11-alpine
 
 WORKDIR /app
 
-COPY --from=builder /app/deps /app
-COPY --from=builder /app/app.py /app
+# Copy installed dependencies and app
+COPY --from=builder /app /app
 
-CMD ["app.py"]
+CMD ["python", "app.py"]
