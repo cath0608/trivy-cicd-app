@@ -18,6 +18,9 @@ FROM python:3.11-alpine
 
 WORKDIR /app
 
+# Install only setuptools in final stage to patch built-in version
+RUN pip install --no-cache-dir setuptools>=78.1.1
+
 # Copy installed dependencies and app
 COPY --from=builder /app /app
 
